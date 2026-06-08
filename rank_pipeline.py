@@ -424,7 +424,41 @@ def extract_features(cand):
     interview_rate = sigs.get('interview_completion_rate', 0.0)
     interview_score = min(1.0, interview_rate)
     
-    behavioral_combined = (np_score * 0.35 + rr_score * 0.25 + activity_score * 0.25 + interview_score * 0.15)
+    # --- V5: NEW REDROB SIGNALS ---
+    completeness = sigs.get('profile_completeness_score', 0)
+    completeness_score = min(1.0, completeness / 100.0)
+    
+    open_to_work = sigs.get('open_to_work_flag', False)
+    otw_score = 1.0 if open_to_work else 0.0
+    
+    saves = sigs.get('saved_by_recruiters_30d', 0)
+    saved_score = min(1.0, saves / 5.0)  # 5+ saves is top tier
+    
+    resp_time = sigs.get('avg_response_time_hours', -1)
+    if resp_time < 0:
+        resp_time_score = 0.5  # Neutral default if unknown
+    elif resp_time <= 2.0:
+        resp_time_score = 1.0
+    else:
+        resp_time_score = max(0.0, 1.0 - (resp_time - 2) / 46.0) # decays to 0 at 48 hours
+        
+    assessments = sigs.get('skill_assessment_scores', {})
+    if assessments:
+        avg_assessment = sum(assessments.values()) / len(assessments)
+        assessment_score = avg_assessment / 100.0
+    else:
+        assessment_score = 0.0
+
+    behavioral_combined = (
+        np_score * 0.20 +
+        rr_score * 0.15 +
+        activity_score * 0.15 +
+        interview_score * 0.10 +
+        completeness_score * 0.15 +
+        otw_score * 0.10 +
+        saved_score * 0.10 +
+        resp_time_score * 0.05
+    )
     
     # ---------------------------------------------------------------
     # RISK FEATURES
@@ -518,6 +552,11 @@ def extract_features(cand):
         'rr_score': rr_score,
         'activity_score': activity_score,
         'interview_score': interview_score,
+        'completeness_score': completeness_score,
+        'otw_score': otw_score,
+        'saved_score': saved_score,
+        'resp_time_score': resp_time_score,
+        'assessment_score': assessment_score,
         'behavioral_combined': behavioral_combined,
         # Risk
         'honeypot_risk': honeypot_risk,
@@ -588,8 +627,9 @@ def compute_final_score(features):
     # Behavioral Score
     s_behavior = features['behavioral_combined']
     
-    # V3.1 additive formula with title dampener
-    final = title_dampener * (0.75 * s_tech + 0.25 * s_behavior)
+    # V5 additive formula with title dampener and skill assessment bonus
+    # We add up to 0.02 to the final score for candidates with perfect assessment scores.
+    final = title_dampener * (0.75 * s_tech + 0.25 * s_behavior) + (features['assessment_score'] * 0.02)
     
     return round(final, 6)
 
@@ -626,8 +666,8 @@ def stage2_score_candidates(candidates):
         f['semantic_score'] = sims[i] / max_sim
         f['final_score'] = compute_final_score(f)
         
-    # Sort by score descending
-    results.sort(key=lambda f: -f['final_score'])
+    # Sort by score descending, then candidate_id ascending (deterministic tie-breaker)
+    results.sort(key=lambda f: (-f['final_score'], f['candidate_id']))
         
     # Return as list of (cid, features, score) for compatibility with downstream
     return [(f['candidate_id'], f, f['final_score']) for f in results]
@@ -896,9 +936,9 @@ def generate_reasoning(features):
     
     # Career evidence
     if features['seniority'] >= 0.7:
-        parts.append(f"{features['title']} with {features['yoe']:.0f} years experience")
+        parts.append(f"{features['title']} at {features['company']} with {features['yoe']:.0f} years experience")
     elif features['yoe'] > 0:
-        parts.append(f"{features['yoe']:.0f} years experience")
+        parts.append(f"{features['yoe']:.0f} years experience at {features['company']}")
     
     if features['product_dna'] > 0.7:
         parts.append("primarily product-company background")
@@ -942,8 +982,8 @@ def stage6_submission(results):
             'reasoning': reasoning
         })
     
-    # Write Submission V4
-    submission_path = 'f:/IND_RUN/submission_v4.csv'
+    # Write Submission V5
+    submission_path = 'f:/IND_RUN/submission_v5.csv'
     with open(submission_path, 'w', newline='', encoding='utf-8') as f:
         writer = csv.DictWriter(f, fieldnames=['candidate_id', 'rank', 'score', 'reasoning'])
         writer.writeheader()
