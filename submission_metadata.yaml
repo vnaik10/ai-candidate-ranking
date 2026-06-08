@@ -1,0 +1,45 @@
+team_name: "Deen-Lofy"
+
+primary_contact:
+  name: "Vikas Naik"
+  email: "naikvikas111@gmail.com"
+  phone: "+91-9110227797"
+
+team_members:
+  - name: "Vikas Naik"
+    email: "naikvikas111@gmail.com"
+    role: "ML Engineer"
+
+github_repo: "https://github.com/vikas/redrob-ranker"
+sandbox_link: "https://huggingface.co/spaces/vikas/redrob-ranker"
+
+reproduce_command: "python v4_relaxed_experiment.py"
+
+compute:
+  platform: "Local Windows PC"
+  cpu_cores: 8
+  ram_gb: 16
+  python_version: "3.11"
+  os: "Windows 11"
+  uses_gpu_for_inference: false
+  has_network_during_ranking: false
+  pre_computation_required: true
+  pre_computation_time_minutes: 3
+
+ai_tools_used:
+  - "Antigravity (Google DeepMind Agent)"
+  - "Gemini 3.1 Pro"
+  - "Claude Opus 4.6"
+
+ai_usage_summary: |
+  Used an advanced AI agent (Antigravity running Gemini 3.1 Pro for reasoning | and Claude opus 4.6 for building) for deep dataset forensics, feature engineering, and pipeline coding. The agent autonomously analyzed the dataset, identified synthetic honeypots (impossible skill durations), implemented a TF-IDF semantic layer against the JD, and built the final expert ranking system. No candidate data was sent to an LLM for runtime scoring; the AI was used entirely during the development and coding phase to build a deterministic, CPU-bound Python script.
+
+methodology_summary: |
+  Deterministic Rule-Based Expert System combined with lightweight Semantic TF-IDF matching. The ranker extracts 50+ explicit signals (retrieval experience, vector databases, production scaling) to generate a dense technical score. We identified that the dataset is synthetically generated with anomalous 'impossible' skill durations. To prevent penalizing elite candidates, we relaxed the honeypot duration filter while enforcing strict Domain (no pure CV/Robotics) and Years of Experience (3.5-15) bounds. Runtime is <3 minutes for 100k candidates on pure CPU.
+
+declarations:
+  read_submission_spec: true
+  code_is_original_work: true
+  no_collusion: true
+  honeypot_check_done: true
+  reproduction_tested: true
