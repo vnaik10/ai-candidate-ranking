@@ -30,6 +30,7 @@ ai_tools_used:
   - "Antigravity (Google DeepMind Agent)"
   - "Gemini 3.1 Pro"
   - "Claude Opus 4.6"
+  - "GLM 5.1"
 
 ai_usage_summary: |
   Used an advanced AI agent (Antigravity running Gemini 3.1 Pro for reasoning | and Claude opus 4.6 for building) for deep dataset forensics, feature engineering, and pipeline coding. The agent autonomously analyzed the dataset, identified synthetic honeypots (impossible skill durations), implemented a TF-IDF semantic layer against the JD, and built the final expert ranking system. No candidate data was sent to an LLM for runtime scoring; the AI was used entirely during the development and coding phase to build a deterministic, CPU-bound Python script.
