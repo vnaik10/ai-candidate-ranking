@@ -1,4 +1,4 @@
-# Redrob Hackathon: V4 Relaxed Ranking System 🏆
+# Redrob Hackathon: Relaxed Ranking System 🏆
 
 This repository contains our top-tier candidate ranking system designed for the Redrob AI Candidate Ranking Hackathon.
 
